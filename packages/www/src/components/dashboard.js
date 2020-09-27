@@ -92,7 +92,7 @@ export default () => {
         }}
       >
         <Label sx={{ display: "flex" }}>
-          <span>Add&nbsp;Todo</span>
+          <span>Add&nbsp;item</span>
           <Input ref={inputRef} sx={{ marginLeft: 1 }} />
         </Label>
         <Button sx={{ marginLeft: 1 }}>Submit</Button>

@@ -21,7 +21,7 @@ export default props => {
         )}
       </Flex>
       <Flex sx={{ flexDirection: "column", padding: 3 }}>
-        <Heading as="h1">Get Stuff Done</Heading>
+        <Heading as="h1">Lists</Heading>
         <Button
           sx={{ marginTop: 2 }}
           onClick={() => {
