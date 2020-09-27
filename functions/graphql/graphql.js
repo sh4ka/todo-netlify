@@ -1,4 +1,8 @@
 const { ApolloServer, gql } = require('apollo-server-lambda');
+const faunadb = require("faunadb");
+const q = faunadb.query;
+
+var client = new faunadb.Client({ secret: process.env.FAUNA });
  
 // Construct a schema, using GraphQL schema language
 const typeDefs = gql`
@@ -15,30 +19,56 @@ const typeDefs = gql`
       updateTodoDone(id: ID!): Todo 
   }
 `;
-
-const todos = {};
-let todoIndex = 0;
  
 // Provide resolver functions for your schema fields
 const resolvers = {
   Query: {
-    todos: (parent, args, { user }) => {
+    todos: async (parent, args, { user }) => {
         if (!user) {
             return [];
         } else {
-            return Object.values(todos);
+          const results = await client.query(
+            q.Paginate(q.Match(q.Index("lists_by_user"), "user-test"))
+          );
+          return results.data.map(([ref, text, done]) => ({
+            id: ref.id,
+            text,
+            done
+          }))
         }        
     }
   },
   Mutation: {
-      addTodo: (_, {text}) => {
-        todoIndex++;
-        const id = `key-${todoIndex}`;
-        todos[id] = {id, text, done: false};
+      addTodo: async (_, {text}) => {
+        if(!user) {
+          throw new Error("Must be authenticated to insert todos");
+        }
+        const results = await client.query(
+          q.Create(q.Collection("lists"), {
+            data: {
+              text,
+              done: false,
+              owner: user
+            }
+          })
+        )
+        return {
+          ...results.data,
+          id: results.ref.id
+        };
       },
-      updateTodoDone: (_, {id}) => {
-        todos[id].done = true;
-        return todos[id];
+      updateTodoDone: async (_, {id}) => {
+        const results = await client.query(
+          q.Update(q.Ref(q.Collection("lists"), id), {
+            data: {
+              done: true
+            }
+          })
+        );
+        return {
+          ...results.data,
+          id: results.ref.id
+        }
       }
   }
 };
@@ -62,6 +92,7 @@ const server = new ApolloServer({
   introspection: true,
 });
  
+
 exports.handler = server.createHandler({
     cors: {
         origin: '*',
