@@ -22,8 +22,8 @@ const ADD_TODO = gql`
 `;
 
 const UPDATE_TODO_DONE = gql`
-  mutation UpdateTodoDone($id: ID!) {
-    updateTodoDone(id: $id) {
+  mutation UpdateTodoDone($id: ID!, $done: Boolean!) {
+    updateTodoDone(id: $id, done: $done) {
       text
       done
     }
@@ -96,6 +96,7 @@ export default () => {
           <Input ref={inputRef} sx={{ marginLeft: 1 }} />
         </Label>
         <Button sx={{ marginLeft: 1 }}>Submit</Button>
+        <Button sx={{ marginLeft: 1 }}>Clear list</Button>
       </Flex>
       <Flex sx={{ flexDirection: "column" }}>
         {loading ? <div>loading...</div> : null}
@@ -108,7 +109,7 @@ export default () => {
                 as="li"
                 onClick={async () => {
                   console.log("updateTodoDone");
-                  await updateTodoDone({ variables: { id: todo.id } });
+                  await updateTodoDone({ variables: { id: todo.id, done: !todo.done } });
                   console.log("refetching");
                   await refetch();
                 }}
